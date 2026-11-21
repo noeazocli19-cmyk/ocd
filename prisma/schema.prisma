@@ -1,0 +1,439 @@
+// Schéma OCD — plateforme communautaire
+// SQLite en environnement de démonstration (structuré pour une migration PostgreSQL/Neon)
+// NOTE SQLite : pas d'enum Prisma => statuts en String validés côté API (Zod)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ MEMBRES & AUTH ============
+
+model User {
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  passwordHash        String
+  firstName           String
+  lastName            String
+  role                String   @default("MEMBER") // MEMBER | MODERATOR | ADMIN | SUPER_ADMIN
+  avatarUrl           String?
+  coverUrl            String?
+  bio                 String?
+  country             String?
+  city                String?
+  profession          String?
+  domain              String?  // secteur d'activité
+  experienceLevel     String?  // ETUDIANT | DEBUTANT | INTERMEDIAIRE | CONFIRME | EXPERT
+  interests           String?  // JSON array de centres d'intérêt
+  website             String?
+  linkedin            String?
+  twitter             String?
+  instagram           String?
+  whatsapp            String?
+  onboardingCompleted Boolean  @default(false)
+  isDemo              Boolean  @default(false) // profil de démonstration
+  isBlocked           Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  sessions             Session[]
+  skills               Skill[]
+  experiences          Experience[]
+  projects             Project[]
+  posts                Post[]
+  comments             Comment[]
+  reactions            Reaction[]
+  connectionsSent      Connection[]  @relation("ConnectionSender")
+  connectionsReceived  Connection[]  @relation("ConnectionReceiver")
+  followsSent          Follow[]      @relation("Follower")
+  followsReceived      Follow[]      @relation("Following")
+  groupMemberships     GroupMember[]
+  groupsCreated        Group[]       @relation("GroupCreator")
+  conversations        ConversationMember[]
+  messagesSent         Message[]
+  notifications        Notification[]
+  eventRegistrations   EventRegistration[]
+  eventsOrganized      Event[]       @relation("EventOrganizer")
+  reportsFiled         Report[]
+  announcements        Announcement[]
+
+  @@index([email])
+  @@index([country, city])
+  @@index([profession])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+model Skill {
+  id     String @id @default(cuid())
+  name   String
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([name])
+  @@map("skills")
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  title       String
+  company     String?
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isCurrent   Boolean   @default(false)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("experiences")
+}
+
+// Projets personnels des membres
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("IDEA") // IDEA | IN_PROGRESS | LAUNCHED
+  imageUrl    String?
+  link        String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("projects")
+}
+
+// ============ CONTENU COMMUNAUTAIRE ============
+
+model Post {
+  id        String   @id @default(cuid())
+  content   String
+  category  String   @default("EXPERIENCES") // ENTREPRENARIAT | BUSINESS | TECHNOLOGIE | MOTIVATION | EDUCATION | CREATION_CONTENU | PROJETS | EXPERIENCES
+  imageUrl  String?
+  videoUrl  String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId   String?
+  group     Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments  Comment[]
+  reactions Reaction[]
+
+  @@index([userId])
+  @@index([groupId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String
+  postId    String
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?  @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentThread")
+  createdAt DateTime  @default(now())
+
+  @@index([postId])
+  @@index([userId])
+  @@map("comments")
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  type      String   @default("LIKE") // LIKE | CELEBRATE | INSPIRED | SUPPORT
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId, type])
+  @@index([postId])
+  @@map("reactions")
+}
+
+model Connection {
+  id         String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("ConnectionSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING") // PENDING | ACCEPTED | REJECTED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("connections")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// ============ GROUPES ============
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  category    String   @default("ENTREPRENARIAT")
+  imageUrl    String?
+  isFeatured  Boolean  @default(false)
+  isDemo      Boolean  @default(false) // groupe d'exemple (donnée fictive)
+  createdBy   String
+  creator     User     @relation("GroupCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members GroupMember[]
+  posts   Post[]
+
+  @@index([category])
+  @@map("groups")
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("MEMBER") // ADMIN | MODERATOR | MEMBER
+  joinedAt  DateTime @default(now())
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+  @@map("group_members")
+}
+
+// ============ MESSAGERIE ============
+
+model Conversation {
+  id        String   @id @default(cuid())
+  isGroup   Boolean  @default(false)
+  title     String?  // pour les conversations de groupe (future version)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  ConversationMember[]
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model ConversationMember {
+  id             String      @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime    @default(now())
+  joinedAt       DateTime    @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_members")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  mediaUrl       String?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+// ============ NOTIFICATIONS ============
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // CONNECTION_REQUEST | MESSAGE | REACTION | COMMENT | GROUP_INVITE | ANNOUNCEMENT | EVENT_UPDATE
+  title     String
+  body      String?
+  linkUrl   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ============ ÉVÉNEMENTS ============
+
+model Event {
+  id             String    @id @default(cuid())
+  title          String
+  description    String
+  imageUrl       String?
+  category       String    @default("RENCONTRE") // CONFERENCE | RENCONTRE | MASTERCLASS | ATELIER | LIVE | CHALLENGE | ENTREPRENARIAT
+  startDate      DateTime
+  endDate        DateTime?
+  location       String?
+  isOnline       Boolean   @default(false)
+  onlineUrl      String?
+  organizerId    String?
+  organizer      User?     @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: SetNull)
+  organizerName  String    @default("OCD")
+  isDemo         Boolean   @default(false) // événement d'exemple (donnée fictive)
+  capacity       Int?
+  status         String    @default("PUBLISHED") // DRAFT | PUBLISHED | CANCELLED
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  registrations EventRegistration[]
+
+  @@index([startDate])
+  @@index([category])
+  @@map("events")
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   @default("REGISTERED") // REGISTERED | CANCELLED
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+  @@map("event_registrations")
+}
+
+// ============ CONTENUS INSTITUTIONNELS (Bovann & OCD) ============
+
+// Réalisations documentées de Bovann / OCD
+model Achievement {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  category    String    @default("ENTREPRENARIAT") // ENTREPRENARIAT | PROJETS_NUMERIQUES | EVENEMENTS | INITIATIVES | CONTENU | COLLABORATIONS | PROFESSIONNEL
+  date        DateTime?
+  status      String    @default("REALISE") // EN_COURS | REALISE | A_VENIR
+  imageUrl    String?
+  videoUrl    String?
+  results     String?   // JSON array de résultats documentés {label, value}
+  isPublished Boolean   @default(false)
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  media AchievementMedia[]
+
+  @@index([isPublished])
+  @@map("achievements")
+}
+
+model AchievementMedia {
+  id            String      @id @default(cuid())
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  url           String
+  type          String      @default("IMAGE") // IMAGE | VIDEO
+  caption       String?
+  order         Int         @default(0)
+
+  @@index([achievementId])
+  @@map("achievement_media")
+}
+
+// Galerie photographique (Bovann & activités OCD)
+model GalleryMedia {
+  id          String   @id @default(cuid())
+  url         String
+  type        String   @default("IMAGE") // IMAGE | VIDEO
+  category    String   @default("PORTRAITS") // PORTRAITS | CONFERENCES | EVENEMENTS | RENCONTRES | ENTREPRENARIAT | COULISSES | PROJETS | COMMUNAUTE
+  title       String?
+  description String?
+  order       Int      @default(0)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+  @@map("gallery_media")
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  reporterId String
+  reporter   User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType String   // POST | COMMENT | USER | MESSAGE
+  targetId   String
+  reason     String
+  status     String   @default("PENDING") // PENDING | RESOLVED | DISMISSED
+  createdAt  DateTime @default(now())
+
+  @@index([status])
+  @@map("reports")
+}
+
+model Announcement {
+  id         String   @id @default(cuid())
+  title      String
+  body       String
+  imageUrl   String?
+  authorId   String?
+  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  isPublished Boolean @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("announcements")
+}
+
+// Contenus éditoriaux administrables (clé/valeur) : présentation Bovann, philosophie, coordonnées vérifiées, compteurs réels...
+model SiteContent {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("site_content")
+}

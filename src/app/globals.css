@@ -1,0 +1,238 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-sora);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-ocd-orange: var(--ocd-orange);
+  --color-ocd-dark: var(--ocd-dark);
+  --color-ocd-gray: var(--ocd-gray);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.75rem;
+  /* Palette officielle OCD */
+  --ocd-orange: #f07819;
+  --ocd-dark: #111111;
+  --ocd-gray: #777777;
+  --ocd-light: #f5f5f5;
+  --ocd-dark-bg: #171717;
+
+  --background: #ffffff;
+  --foreground: #111111;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #f07819;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #111111;
+  --muted: #f5f5f5;
+  --muted-foreground: #777777;
+  --accent: #fff3e8;
+  --accent-foreground: #b45309;
+  --destructive: #dc2626;
+  --border: #e7e5e4;
+  --input: #e7e5e4;
+  --ring: #f07819;
+  --chart-1: #f07819;
+  --chart-2: #111111;
+  --chart-3: #a8a29e;
+  --chart-4: #fbbf24;
+  --chart-5: #57534e;
+  --sidebar: #fafaf9;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #f07819;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #e7e5e4;
+  --sidebar-ring: #f07819;
+}
+
+.dark {
+  --background: #171717;
+  --foreground: #f5f5f5;
+  --card: #1f1f1f;
+  --card-foreground: #f5f5f5;
+  --popover: #1f1f1f;
+  --popover-foreground: #f5f5f5;
+  --primary: #f07819;
+  --primary-foreground: #ffffff;
+  --secondary: #262626;
+  --secondary-foreground: #f5f5f5;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #2a1d10;
+  --accent-foreground: #fdba74;
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.09);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #f07819;
+  --chart-1: #f07819;
+  --chart-2: #f5f5f5;
+  --chart-3: #a3a3a3;
+  --chart-4: #fbbf24;
+  --chart-5: #57534e;
+  --sidebar: #1a1a1a;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #f07819;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: rgba(255, 255, 255, 0.09);
+  --sidebar-ring: #f07819;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01" on, "cv01" on;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  ::selection {
+    background: #f07819;
+    color: #ffffff;
+  }
+  h1, h2, h3 {
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Scrollbar premium */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 113, 108, 0.35);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(240, 120, 25, 0.55);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.font-display {
+  font-family: var(--font-sora), var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Utilitaires OCD */
+.text-gradient-ocd {
+  background: linear-gradient(92deg, #f07819 0%, #ff9a3d 55%, #f07819 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-grid-ocd {
+  background-image:
+    linear-gradient(to right, rgba(120, 113, 108, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 113, 108, 0.08) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.dark .bg-grid-ocd {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+}
+
+.glow-ocd {
+  box-shadow: 0 0 0 1px rgba(240, 120, 25, 0.25), 0 8px 40px -8px rgba(240, 120, 25, 0.45);
+}
+
+@keyframes ocd-pulse-ring {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes ocd-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes ocd-dash {
+  to { stroke-dashoffset: -1000; }
+}
+
+.animate-ocd-float {
+  animation: ocd-float 6s ease-in-out infinite;
+}
+
+.ocd-marquee {
+  animation: ocd-marquee 30s linear infinite;
+}
+@keyframes ocd-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Ligne d'accent sous les titres de section */
+.ocd-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f07819;
+}
+.ocd-kicker::before {
+  content: "";
+  width: 1.75rem;
+  height: 2px;
+  background: #f07819;
+  border-radius: 2px;
+}
